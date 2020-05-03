@@ -30,7 +30,14 @@ const userSchema = new mongoose.Schema({
     password: String
 });
 //add passport-local-mongoose plugin to userSchema
-userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(passportLocalMongoose, {
+    //adding options to use input field with name="email" as username because default is name="username"
+    usernameField: "email",
+    //altering error messages read more on passport-local-mongoose docs about these options
+    errorMessages: {
+        UserExistsError: "User already registered, Please try logging in!"
+    }
+});
 
 const User = new mongoose.model("User", userSchema);
 //using passport on User modelor users collection in userDB and adding serializing & deserailizing property( ie creating and breaking a cookie)
@@ -65,7 +72,8 @@ app.get("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
     //registering and saving user to User model
-    User.register({ username: req.body.username }, req.body.password, (err, user) => {
+    //using email as username
+    User.register({ email: req.body.email }, req.body.password, (err, user) => {
         if (err) {
             console.log(err.message);
             res.redirect("/register");
@@ -79,7 +87,7 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
     const user = new User({
-        username: req.body.username,
+        email: req.body.email,
         password: req.body.password
     });
     req.login(user, function (err) {
